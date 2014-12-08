@@ -6,18 +6,19 @@ import javax.servlet.annotation.WebServlet;
 
 import com.vaadin.annotations.Theme;
 import com.vaadin.annotations.VaadinServletConfiguration;
+import com.vaadin.data.Property.ValueChangeEvent;
+import com.vaadin.data.Property.ValueChangeListener;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
-import com.vaadin.shared.ui.label.ContentMode;
 import com.vaadin.tapio.googlemaps.GoogleMap;
 import com.vaadin.tapio.googlemaps.client.LatLon;
 import com.vaadin.tapio.googlemaps.client.events.MapMoveListener;
 import com.vaadin.tapio.googlemaps.client.events.MarkerClickListener;
+import com.vaadin.tapio.googlemaps.client.layers.GoogleMapKmlLayer;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapInfoWindow;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapMarker;
 import com.vaadin.tapio.googlemaps.client.overlays.GoogleMapPolygon;
-import com.vaadin.ui.HorizontalLayout;
-import com.vaadin.ui.Label;
+import com.vaadin.ui.CheckBox;
 import com.vaadin.ui.TextField;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
@@ -28,6 +29,12 @@ import com.vaadin.ui.Window;
 public class MyVaadinUI extends UI {
 
 	public static final String API_KEY = "AIzaSyDOT_KUZQF_cOyMe7w4VMcmNxxezo4wXOE";
+	
+	public static final String URL_LAYER_0 = "https://raw.githubusercontent.com/danielef/gis/master/src/main/webapp/VAADIN/maps/MGM2000RM.kml";
+	public static final String URL_LAYER_1 = "https://raw.githubusercontent.com/danielef/gis/master/src/main/webapp/VAADIN/maps/MGM2000DV.kml";
+	
+	public static final GoogleMapKmlLayer LAYER_0 = new GoogleMapKmlLayer(URL_LAYER_0);
+	public static final GoogleMapKmlLayer LAYER_1 = new GoogleMapKmlLayer(URL_LAYER_1);
 	
 	public static final double DEFAULT_LAT = 19.4364413;
 	public static final double DEFAULT_LON = -99.2122243;
@@ -50,13 +57,13 @@ public class MyVaadinUI extends UI {
         final GoogleMap map = new GoogleMap(API_KEY, null, null);
         map.setCenter(new LatLon(DEFAULT_LAT, DEFAULT_LON));
         map.setSizeFull();
-        map.setZoom(17);
+        map.setZoom(7);
         
         // Add Markers
         addMarkers(map);
         
         // Add Poligons
-        addPoligons(map);
+        //addPoligons(map);
         
         // Add Console
         addConsole(map);
@@ -106,13 +113,20 @@ public class MyVaadinUI extends UI {
     														 2 );      // Border Stroke
         map.addPolygonOverlay(polygon);
     }
-    
-    
-    private void addConsole(GoogleMap map) {
+        
+    private void addConsole(final GoogleMap map) {
     	final Window console = new Window("eGIS Demo");
-    	final HorizontalLayout layout = new HorizontalLayout();
+    	final VerticalLayout main = new VerticalLayout();
+    	final VerticalLayout layout = new VerticalLayout();
+    	final VerticalLayout layers = new VerticalLayout();
     	final TextField latField = new TextField("Latitud");
-    	final TextField lonField= new TextField("Longitud");
+    	final TextField lonField = new TextField("Longitud");
+    	
+    	final CheckBox layer0 = new CheckBox("Estado", false);
+    	final CheckBox layer1 = new CheckBox("Municipios", false);
+    	
+    	latField.setEnabled(false);
+    	lonField.setEnabled(false);
     	
     	// Initial Values
     	latField.setValue(DEFAULT_LAT+"");
@@ -127,15 +141,44 @@ public class MyVaadinUI extends UI {
 			}    		
     	});
     	
+    	layer0.addValueChangeListener(new ValueChangeListener(){
+			@Override
+			public void valueChange(ValueChangeEvent event) {
+				if (layer0.getValue()) {
+					map.addKmlLayer(LAYER_0);
+				} else {
+					map.removeKmlLayer(LAYER_0);
+				}
+			}    		
+    	});
+    	
+    	layer1.addValueChangeListener(new ValueChangeListener(){
+			@Override
+			public void valueChange(ValueChangeEvent event) {
+				if (layer1.getValue()) {
+					map.addKmlLayer(LAYER_1);
+				} else {
+					map.removeKmlLayer(LAYER_1);
+				}
+			}    		
+    	});
+    	
+    	layers.setMargin(true);
+    	layers.addComponent(layer0);
+    	layers.addComponent(layer1);
+    	
     	layout.setMargin(true);
     	layout.addComponent(latField);
-    	layout.addComponent(new Label("<div style='width:10px; height: 10px;'></div>", ContentMode.HTML));
     	layout.addComponent(lonField);
     	
-    	console.setContent(layout);
+    	main.addComponent(layout);
+    	main.addComponent(layers);
+
+    	console.setContent(main);
     	console.setClosable(false);
     	console.setPositionX(80);
     	console.setPositionY(20);
     	addWindow(console);
     }
+    
 }
